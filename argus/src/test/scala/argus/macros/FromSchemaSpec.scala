@@ -1,6 +1,7 @@
 package argus.macros
 
 import java.io.File
+import java.time.ZonedDateTime
 import java.util.UUID
 
 import argus.json.JsonDiff
@@ -9,8 +10,6 @@ import org.scalatest.{FlatSpec, Matchers}
 import cats.syntax.either._
 import io.circe._
 import io.circe.syntax._
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
 
 import scala.io.Source
 
@@ -312,7 +311,7 @@ class FromSchemaSpec extends FlatSpec with Matchers with JsonMatchers {
     root.id should === (Some(UUID.fromString(uuid)))
   }
 
-  it should "encode DateTime type" in {
+  it should "encode ZonedDateTime type" in {
     @fromSchemaJson("""
     {
       "type": "object",
@@ -329,10 +328,8 @@ class FromSchemaSpec extends FlatSpec with Matchers with JsonMatchers {
     import Foo.Implicits._
     import io.circe.syntax._
 
-
-    val dateTime = "2017-01-01T10:00:00.000Z"
-    val uuid = "38400000-8cf0-11bd-b23e-10b96e4ef00d"
-    val root = Root(Some(DateTime.parse(dateTime)))
+    val dateTime = "2017-01-01T10:00:00.001Z"
+    val root = Root(Some(ZonedDateTime.parse(dateTime)))
     root.asJson should beSameJsonAs (s"""
                                         |{
                                         |  "createdAt": "$dateTime"
@@ -340,7 +337,7 @@ class FromSchemaSpec extends FlatSpec with Matchers with JsonMatchers {
                                      """.stripMargin)
   }
 
-  it should "decode DateTime type" in {
+  it should "decode ZonedDateTime type" in {
     @fromSchemaJson("""
     {
       "type": "object",
@@ -356,7 +353,7 @@ class FromSchemaSpec extends FlatSpec with Matchers with JsonMatchers {
     import Foo._
     import Foo.Implicits._
 
-    val dateTime = "2017-01-01T10:00:00.000Z"
+    val dateTime = "2017-01-01T10:00:00.001Z"
     val json =
       s"""
          |{
@@ -365,7 +362,7 @@ class FromSchemaSpec extends FlatSpec with Matchers with JsonMatchers {
       """.stripMargin
     val root = parser.decode[Root](json).toOption.get
 
-    root.createdAt should === (Some(DateTime.parse(dateTime)))
+    root.createdAt should === (Some(ZonedDateTime.parse(dateTime)))
   }
 
   it should "return an error on decoding for datetime with wrong format" in {
@@ -395,7 +392,7 @@ class FromSchemaSpec extends FlatSpec with Matchers with JsonMatchers {
 
     root should be ('left)
     root.left.get match {
-      case d: DecodingFailure => d.message should === ("Invalid format: \"wrongDateTime\"")
+      case d: DecodingFailure => d.getMessage should === ("ZonedDateTime: DownField(createdAt)")
       case e@_ => fail(s"Wrong error type: ${e.getClass.getName}")
     }
   }
